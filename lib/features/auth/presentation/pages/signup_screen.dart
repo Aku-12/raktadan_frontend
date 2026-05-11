@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
-import 'signup_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   static const Color _brandRed    = Color(0xFFDC2626);
   static const Color _darkText    = Color(0xFF1A1D2E);
   static const Color _mutedText   = Color(0xFF6B7280);
   static const Color _lightGray   = Color(0xFFF5F5F7);
   static const Color _borderColor = Color(0xFFEEEEF0);
 
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -32,21 +37,37 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Back Button
+              GestureDetector(
+                onTap: () {
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _lightGray,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.arrow_back_rounded, color: _darkText, size: 20),
+                ),
+              ),
+              const SizedBox(height: 24),
               _buildHeader(),
-              const SizedBox(height: 48),
-              _buildLoginForm(),
+              const SizedBox(height: 36),
+              _buildSignupForm(),
               const SizedBox(height: 32),
-              _buildLoginButton(),
+              _buildSignupButton(),
               const SizedBox(height: 24),
               _buildDivider(),
               const SizedBox(height: 24),
-              _buildSocialLogin(),
-              const SizedBox(height: 40),
-              _buildSignUpPrompt(),
+              _buildSocialSignup(),
+              const SizedBox(height: 32),
+              _buildLoginPrompt(),
             ],
           ),
         ),
@@ -61,21 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFEF2F2), // Light red bg
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _brandRed.withOpacity(0.2)),
-          ),
-          child: const Center(
-            child: Icon(Icons.water_drop_rounded, color: _brandRed, size: 32),
-          ),
-        ),
-        const SizedBox(height: 24),
         const Text(
-          "Welcome back",
+          "Create Account",
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w900,
@@ -85,8 +93,8 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          "Log in to continue your journey of saving lives.",
+        Text(
+          "Join the Rakta Sanchar community and become a hero today.",
           style: TextStyle(
             fontSize: 15,
             color: _mutedText,
@@ -98,12 +106,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  //  LOGIN FORM
+  //  SIGNUP FORM
   // ═══════════════════════════════════════════════════════════════════════════
-  Widget _buildLoginForm() {
+  Widget _buildSignupForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _fieldLabel("FULL NAME"),
+        const SizedBox(height: 8),
+        _buildTextField(
+          controller: _nameController,
+          icon: Icons.person_outline_rounded,
+          hint: "Enter your full name",
+        ),
+        const SizedBox(height: 20),
+        
         _fieldLabel("EMAIL ADDRESS"),
         const SizedBox(height: 8),
         _buildTextField(
@@ -113,28 +130,28 @@ class _LoginScreenState extends State<LoginScreen> {
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 20),
+        
         _fieldLabel("PASSWORD"),
         const SizedBox(height: 8),
         _buildTextField(
           controller: _passwordController,
           icon: Icons.lock_outline_rounded,
-          hint: "Enter your password",
+          hint: "Create a password",
           isPassword: true,
+          obscureState: _obscurePassword,
+          onToggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
         ),
-        const SizedBox(height: 16),
-        Align(
-          alignment: Alignment.centerRight,
-          child: GestureDetector(
-            onTap: () {},
-            child: const Text(
-              "Forgot Password?",
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _brandRed,
-              ),
-            ),
-          ),
+        const SizedBox(height: 20),
+        
+        _fieldLabel("CONFIRM PASSWORD"),
+        const SizedBox(height: 8),
+        _buildTextField(
+          controller: _confirmPasswordController,
+          icon: Icons.lock_reset_rounded,
+          hint: "Repeat your password",
+          isPassword: true,
+          obscureState: _obscureConfirmPassword,
+          onToggleObscure: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
         ),
       ],
     );
@@ -157,6 +174,8 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     required String hint,
     bool isPassword = false,
+    bool obscureState = false,
+    VoidCallback? onToggleObscure,
     TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
@@ -167,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: isPassword && _obscurePassword,
+        obscureText: isPassword && obscureState,
         keyboardType: keyboardType,
         style: const TextStyle(
           fontSize: 15,
@@ -184,11 +203,11 @@ class _LoginScreenState extends State<LoginScreen> {
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    obscureState ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     color: _mutedText,
                     size: 20,
                   ),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  onPressed: onToggleObscure,
                 )
               : null,
           border: InputBorder.none,
@@ -201,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
   //  BUTTONS & SOCIALS
   // ═══════════════════════════════════════════════════════════════════════════
-  Widget _buildLoginButton() {
+  Widget _buildSignupButton() {
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -216,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         child: const Text(
-          "Log In",
+          "Sign Up",
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -246,12 +265,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSocialLogin() {
+  Widget _buildSocialSignup() {
     return Row(
       children: [
         Expanded(
           child: _socialButton(
-            icon: Icons.g_mobiledata_rounded, // Placeholder for Google icon
+            icon: Icons.g_mobiledata_rounded,
             label: "Google",
             onTap: () {},
           ),
@@ -289,12 +308,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSignUpPrompt() {
+  Widget _buildLoginPrompt() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
-          "Don't have an account?",
+          "Already have an account?",
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -304,10 +323,12 @@ class _LoginScreenState extends State<LoginScreen> {
         const SizedBox(width: 6),
         GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const SignupScreen()));
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
           },
           child: const Text(
-            "Sign Up",
+            "Log In",
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
